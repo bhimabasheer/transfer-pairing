@@ -1,0 +1,82 @@
+#import sqlite3 
+#con = sqlite3.connect("tutorial_1.db")
+
+
+#import uuid
+#excel_uuid=uuid.uuid4().hex
+
+import pandas as pd
+from urllib.parse import quote_plus
+from sqlalchemy.orm import Session,sessionmaker,declarative_base
+from sqlalchemy import select,Integer,VARCHAR,Column,BIGINT,create_engine,Identity
+ 
+
+
+Table_Name="Testing_Accounts_PJ7"
+
+connection_string = (
+'Driver={ODBC Driver 17 For SQL Server};'
+'SERVER=standoutresearch.cmgm5ibackyh.us-east-2.rds.amazonaws.com;'
+'Database=Data_Load;'
+'UID=Bbeema;'
+'PWD=Sits@2023;'
+'Trusted_Connection=no;'
+)
+
+connection_uri = f"mssql+pyodbc:///?odbc_connect={quote_plus(connection_string)}"
+
+engine = create_engine(connection_uri, fast_executemany=True)
+#engine = create_engine("sqlite:///test.db", echo=True)
+
+Base= declarative_base()
+
+
+
+
+session = Session(engine)
+class Person(Base):    
+    __tablename__ = "user_account"
+    ID=Column("ID",BIGINT,Identity(1,1),primary_key=True)
+    Firstname=Column("Firstname",VARCHAR(225))
+    Lastname = Column("Lastname",VARCHAR(225))
+    Age =  Column("Age",Integer)
+
+    def __init__(self,firstname,lastname,age) -> None:
+        self.Firstname=firstname
+        self.Lastname=lastname
+        self.Age=age
+       
+       
+
+
+Base.metadata.create_all(engine)
+
+
+Session = sessionmaker(bind=engine)
+session = Session()
+
+
+#p=Person("","Basher",23)
+#session.add(p)
+
+result = session.query(Person).filter(Person.Firstname.like(" ")).all()
+
+#for i in result:
+    #print(i.Lastname)
+    #session.delete(i)
+
+data = [{c.name: getattr(person, c.name) for c in Person.__table__.columns} for person in result]
+print(data)
+data1=pd.DataFrame(data)
+data1.to_excel(r'D:\Beema\Python\Testing_Accounts_PJ7.xlsx', engine='xlsxwriter', sheet_name='test',index=False)
+
+session.commit()
+
+session.close()
+
+
+print("Complete")
+
+
+ 
+
